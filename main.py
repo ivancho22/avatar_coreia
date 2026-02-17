@@ -20,6 +20,29 @@ app.add_middleware(
 # Pega aquí la llave que acabas de generar en tu cuenta nueva
 HEYGEN_API_KEY = "sk_V2_hgu_khwPexdXoX7_0SSDU341LWx6PCUnmIJBl0YhF5OAsSHi" 
 
+@app.post("/create-session")
+async def create_session():
+    # 1. Obtener el Token (puedes reusar tu lógica actual)
+    token_url = "https://api.heygen.com/v1/streaming.create_token"
+    headers = {"x-api-key": os.getenv("HEYGEN_API_KEY")}
+    res = requests.post(token_url, headers=headers)
+    token = res.json().get("data", {}).get("token")
+
+    # 2. Crear la sesión desde el servidor (Render)
+    session_url = "https://api.heygen.com/v1/streaming.new"
+    s_headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    # Aquí es donde ponemos tu Avatar ID definitivo
+    payload = {
+        "version": "v2",
+        "avatar_id": "Eric_v3_public" 
+    }
+    
+    s_res = requests.post(session_url, headers=s_headers, json=payload)
+    return s_res.json() # Enviamos la respuesta completa al Frontend
+
 @app.get("/test")
 async def test():
     """Ruta de prueba para verificar que el servidor está vivo"""
