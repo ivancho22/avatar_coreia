@@ -42,30 +42,22 @@
         let accessToken = null;
 
         async function init() {
-            const status = document.getElementById('status');
             try {
-                log("Conectando con el cerebro en la nube...");
-                
-                // 1. Obtener Token
-                const res = await fetch("https://avatar-coreia.onrender.com/get-token");
-                if (!res.ok) throw new Error("Fallo al obtener token de Render");
-                const data = await res.json();
-                accessToken = data.token;
-                log("Token validado con éxito.");
-
-                // 2. Crear Sesión (Aquí es donde falló antes)
-                log("Iniciando sesión en HeyGen...");
-                const sessionRes = await fetch("https://api.heygen.com/v1/streaming.new", {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'Authorization': `Bearer ${accessToken}` 
-                    },
-                    body: JSON.stringify({ 
-                        version: "v2", 
-                        avatar_id: 'Maya_Sitting_Public'
-                    })
-                });
+                log("Solicitando sesión al servidor de Python...");
+                const res = await fetch(`${BACKEND_URL}/create-session`, { method: 'POST' });
+                const sessionData = await res.json();
+        
+                if (sessionData.data && sessionData.data.session_id) {
+                    sessionId = sessionData.data.session_id;
+                    log("¡SESIÓN CREADA DESDE BACKEND! ID: " + sessionId.substring(0,8));
+                    // Aquí sigue tu lógica de activar botones...
+                } else {
+                    throw new Error("El backend no pudo crear la sesión");
+                }
+            } catch (e) {
+                log("Fallo: " + e.message);
+            }
+        }
 
                 const sessionData = await sessionRes.json();
                 if (!sessionData.data) {
