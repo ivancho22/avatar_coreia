@@ -43,21 +43,18 @@
 
         async function init() {
             const status = document.getElementById('status');
-            const mediaElement = document.getElementById('mediaElement');
-
             try {
                 log("Conectando con el cerebro en la nube...");
-                status.innerText = "OBTENIENDO TOKEN...";
-
-                // 1. Obtener Token de Render
-                const res = await fetch(`${BACKEND_URL}/get-token`);
+                
+                // 1. Obtener Token
+                const res = await fetch("https://avatar-coreia.onrender.com/get-token");
+                if (!res.ok) throw new Error("Fallo al obtener token de Render");
                 const data = await res.json();
                 accessToken = data.token;
-                
-                log("Token validado. Creando sesión de streaming...");
-                status.innerText = "CREANDO SESIÓN...";
+                log("Token validado con éxito.");
 
-                // 2. Crear nueva sesión en HeyGen directamente
+                // 2. Crear Sesión (Aquí es donde falló antes)
+                log("Iniciando sesión en HeyGen...");
                 const sessionRes = await fetch("https://api.heygen.com/v1/streaming.new", {
                     method: 'POST',
                     headers: { 
@@ -66,30 +63,26 @@
                     },
                     body: JSON.stringify({ 
                         version: "v2", 
-                        avatar_id: 'Maya_Sitting_Public',
-                        voice: { voice_id: 'eb59a930103446099044d18efb0f8623' } // Voz en español opcional
+                        avatar_id: 'Maya_Sitting_Public'
                     })
                 });
 
                 const sessionData = await sessionRes.json();
-                sessionId = sessionData.data.session_id;
-
-                log("Sesión establecida. Conectando Media...");
+                if (!sessionData.data) {
+                    log("Error de HeyGen: " + JSON.stringify(sessionData.error));
+                    throw new Error("HeyGen no devolvió datos de sesión");
+                }
                 
-                // 3. Manejo del Stream de video
-                // Nota: En una implementación completa usaríamos WebRTC, 
-                // pero HeyGen proporciona una URL de stream en data.sdp
-                log("Maya está lista en el servidor.");
+                sessionId = sessionData.data.session_id;
+                log("Sesión de Maya creada ID: " + sessionId.substring(0,8));
                 status.innerText = "ONLINE - MAYA LISTA";
                 
-                // Habilitar controles
                 document.getElementById('userInput').disabled = false;
                 document.getElementById('sendBtn').disabled = false;
 
             } catch (e) {
-                console.error(e);
-                status.innerText = "ERROR DE CONEXIÓN";
-                log("ERROR: No se pudo conectar con el backend de Render.");
+                log("Fallo técnico: " + e.message);
+                status.innerText = "ERROR DE SISTEMA";
             }
         }
 
